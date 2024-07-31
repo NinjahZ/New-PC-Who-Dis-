@@ -12,6 +12,7 @@ namespace NinjahZ_Tools
 {
     public partial class Form1 : Form
     {
+        FlowLayoutPanel flowLayoutPanel = new FlowLayoutPanel();
         private AppConfig config;
         private string configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.cfg");
 
@@ -44,12 +45,9 @@ namespace NinjahZ_Tools
 
         private void InitializeCheckBoxes()
         {
-            FlowLayoutPanel flowLayoutPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill, // Makes the panel fill the entire tab page
-                AutoScroll = true,     // Adds a scrollbar if there are too many checkboxes
-                FlowDirection = FlowDirection.TopDown, // Arrange controls from top to bottom
-            };
+            flowLayoutPanel.Dock = DockStyle.Fill; // Makes the panel fill the entire tab page
+            flowLayoutPanel.AutoScroll = true;     // Adds a scrollbar if there are too many checkboxes
+            flowLayoutPanel.FlowDirection = FlowDirection.TopDown; // Arrange controls from top to bottom
             tabPage1.Controls.Add(flowLayoutPanel);
 
             foreach (var entry in config.CheckBoxes)
@@ -71,14 +69,20 @@ namespace NinjahZ_Tools
 
             foreach (var checkBoxConfig in config.CheckBoxes)
             {
-                var checkBox = Controls.OfType<CheckBox>().FirstOrDefault(cb => cb.Text == checkBoxConfig.Text);
-                if (checkBox != null && checkBox.Checked)
-                {
-                    checkedCount += checkBoxConfig.Urls.Count;
+                var checkBox = flowLayoutPanel.Controls.OfType<CheckBox>().FirstOrDefault(cb => cb.Text == checkBoxConfig.Text);
 
-                    foreach (var url in checkBoxConfig.Urls)
+                if (checkBox != null)
+                {
+                    Debug.WriteLine($"CheckBox Found: {checkBox.Text}, Checked: {checkBox.Checked}");
+
+                    if (checkBox.Checked)
                     {
-                        downloadTasks.Add(DownloadFileAsync(checkBox, url));
+                        checkedCount += checkBoxConfig.Urls.Count;
+
+                        foreach (var url in checkBoxConfig.Urls)
+                        {
+                            downloadTasks.Add(DownloadFileAsync(checkBox, url));
+                        }
                     }
                 }
             }
@@ -229,8 +233,136 @@ namespace NinjahZ_Tools
                 MessageBox.Show("Failed to generate system information.");
             }
         }
-    }
 
+        private void RemoveOneDriveButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Define the path to the OneDrive uninstaller
+                string oneDriveSetupPath = @"C:\Windows\SysWOW64\OneDriveSetup.exe"; // For 64-bit systems
+                                                                                     // For 32-bit systems, use: @"C:\Windows\System32\OneDriveSetup.exe"
+
+                // Define the arguments for uninstallation
+                string arguments = "/uninstall";
+
+                // Start the process with the uninstaller command
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = oneDriveSetupPath,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    process.WaitForExit();
+
+                    // Check the exit code to determine if the uninstallation was successful
+                    if (process.ExitCode == 0)
+                    {
+                        MessageBox.Show("Microsoft OneDrive has been uninstalled successfully.");
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Uninstallation failed with exit code {process.ExitCode}. Error: {process.StandardError.ReadToEnd()}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while trying to uninstall OneDrive: {ex.Message}");
+            }
+        }
+
+        private void DisableCortanaButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // PowerShell command to disable Cortana
+                string command = "powershell.exe";
+                string arguments = "-Command \"Set-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search' -Name 'AllowCortana' -Value 0 -Type DWord\"";
+
+                // Start the process with the command and arguments
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = command,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    // Wait for the process to exit
+                    process.WaitForExit();
+
+                    // Check the exit code to determine if the operation was successful
+                    if (process.ExitCode == 0)
+                    {
+                        MessageBox.Show("Cortana has been disabled successfully.");
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Failed to disable Cortana. Error: {process.StandardError.ReadToEnd()}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while trying to disable Cortana: {ex.Message}");
+            }
+        }
+
+        private void DarkModeButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Path to the registry key for Dark Mode
+                string registryPath = @"HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+                string registryValueName = "AppsUseLightTheme";
+
+                // Command to set the registry key value for Dark Mode
+                string command = "powershell.exe";
+                string arguments = $"-Command \"Set-ItemProperty -Path '{registryPath}' -Name '{registryValueName}' -Value 0\"";
+
+                // Start the process with the command and arguments
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = command,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    // Wait for the process to exit
+                    process.WaitForExit();
+
+                    // Check the exit code to determine if the operation was successful
+                    if (process.ExitCode == 0)
+                    {
+                        MessageBox.Show("Dark Mode has been enabled.");
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Failed to enable Dark Mode. Error: {process.StandardError.ReadToEnd()}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while trying to enable Dark Mode: {ex.Message}");
+            }
+        }
+    }
     public class AppConfig
     {
         public List<CheckBoxConfig> CheckBoxes { get; set; }
