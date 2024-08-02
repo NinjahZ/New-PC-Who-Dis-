@@ -3,7 +3,7 @@
 ~Downloader for New PC's / New Windows Installations or any other usecase you may find.
 
 ## Images:
-![Alt text](/NewPCWhoDis.png?raw=true "Form Display Example")
+![Alt text](/NewPCWhoDis.gif?raw=true "Form Display Example")
 
 ## Changelog
 
